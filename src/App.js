@@ -1,26 +1,80 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { v4 as uuidv4 } from 'uuid';
+import ToDoList from "./ToDoList";
+
+const LOCAL_STORAGE_KEY = "todoApp.todos"
 
 
 const App = () => {
+  const TODOLIST = [
+    { id: 1, task: 'Clean the house', done: false },
+    { id: 2, task: 'Do the dishes', done: false },
+    { id: 3, task: 'Walk the dog', done: false },
+    { id: 4, task: 'Call mom', done: false }
+  ]
+  const [todos, setTodos] = useState(TODOLIST);
+  const inputRef = useRef();
+
+  useEffect(() => {
+    const storedTodos = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY))
+    if (storedTodos) {
+      setTodos(storedTodos)
+    }
+  }, [todos])
+
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todos))
+  }, [todos])
+
+  const handleAddToDo = () => {
+    //setTodos here
+    const inputElement = inputRef.current;
+    if (inputElement.value === "") return
+
+    setTodos(prevToDos => {
+      return [...prevToDos, { id: uuidv4(), task: inputElement.value, done: false }]
+    })
+
+    //inputElement.value = null;
+
+  }
+
+  const toggleTodo = (id) => {
+    const newTodos = [...todos]
+    const todo = newTodos.find(todo => todo.id === id)
+    todo.done = !todo.done
+    setTodos(newTodos)
+  }
+
+
   return (
     <div>
       <Title />
-      <Input />
+      {/* <Input 
+        ref={inputRef}
+        onClick={handleAddToDo}
+      /> */}
+      <div>
+        <input ref={inputRef} type="text" placeholder="write a to do"></input>
+        <br />
+        <button onClick={handleAddToDo}>Add To Do</button>
+      </div>
       <hr />
-      <ToDoList />
+      <ToDoList
+        todos={todos}
+        toggleToDo={toggleTodo}
+      />
     </div>
   );
 }
+
 const Title = () => {
   const title = 'React';
   return <h1>Hello {title}</h1>
 }
-const Input = () => {
-  const inputRef = useRef();
-  const clickHandler = () => {
-    const inputElement = inputRef.current;
-    console.log(inputElement.value);
-  }
+
+/*
+const Input = ({ inputRef, clickHandler }) => {
   return (
     <form>
       <input ref={inputRef} type="text" placeholder="write a to do"></input>
@@ -29,46 +83,10 @@ const Input = () => {
     </form>
   )
 }
-const ToDoList = () => {
-  const TODOLIST = [
-    { task: 'Clean the house', done: false },
-    { task: 'Do the dishes', done: false },
-    { task: 'Walk the dog', done: false },
-    { task: 'Call mom', done: false }
-  ]
-  const [todos, setTodos] = useState(TODOLIST);
+*/
 
-  const [checked, setChecked] = useState(new Array(TODOLIST.length).fill(false));
 
-  const handleChange = (position) => {
-    const updatedCheckedState = checked.map((item, index) =>
-      index === position ? !item : item)
 
-    setChecked(updatedCheckedState)
-  };
 
-  return (
-    <ul>
-      {todos.map((task, index) =>
-        <li key={index}>
-          <Checkbox
-            label={task.task}
-            value={checked[index]}
-            onChange={() => handleChange(index)}
-          />
-        </li>
-      )}
-    </ul>
-  )
-}
-
-const Checkbox = ({ label, value, onChange }) => {
-  return (
-    <label>
-      <input type="checkbox" checked={value} onChange={onChange} />
-      {label}
-    </label>
-  )
-}
 
 export default App;
